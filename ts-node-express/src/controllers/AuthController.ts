@@ -6,10 +6,7 @@ interface RegisterRequestBody {
   email: string;
   password: string;
 }
-interface LoginRequestBody {
-  email: string;
-  password: string;
-}
+
 class AuthController {
   // Method to handle user registration
   async register(req: Request<{}, {}, RegisterRequestBody>, res: Response): Promise<void> {
@@ -90,25 +87,35 @@ class AuthController {
 
   async logout(req: Request, res: Response): Promise<void> {
     try {
-      // Clear the refresh token cookie
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-  
-      res.status(200).json({ message: "Logout successful" });
+        const accessToken = req.headers.authorization?.split(" ")[1];
+
+        if (!accessToken) {
+            res.status(400).json({ message: "No access token provided" });
+            return;
+        }
+
+        const decoded = AuthService.verifyToken(accessToken);
+
+        // Calculate remaining expiration time of the token (in seconds)
+        const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+        const expiresIn = decoded.exp - currentTime;
+
+        if (expiresIn > 0) {
+            await AuthService.blacklistToken(accessToken, expiresIn); // Add to blacklist
+        }
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        });
+
+        res.status(200).json({ message: "Logout successful" });
     } catch (err) {
-      // Use a type guard to narrow down the type of `err`
-      if (err instanceof Error) {
-        console.error("Error during logout:", err.message);
+        console.error("Error during logout:", err instanceof Error ? err.message : err);
         res.status(500).json({ message: "Internal server error" });
-      } else {
-        console.error("Unknown error during logout:", err);
-        res.status(500).json({ message: "An unknown error occurred" });
-      }
     }
-  }
+}
   
 }
 

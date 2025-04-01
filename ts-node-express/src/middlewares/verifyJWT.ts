@@ -3,10 +3,17 @@ import AuthService from "@/services/AuthService";
 
 const verifyJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const accessToken = req.headers.authorization?.split(" ")[1]; // Extract access token from Authorization header
+    const accessToken = req.headers.authorization?.split(" ")[1];
 
     if (!accessToken) {
       res.status(401).json({ message: "Unauthorized: No access token provided" });
+      return;
+    }
+
+    // Check if the token is blacklisted
+    const isBlacklisted = await AuthService.isTokenBlacklisted(accessToken);
+    if (isBlacklisted) {
+      res.status(403).json({ message: "Access token has been invalidated" });
       return;
     }
 
@@ -17,9 +24,8 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction): Promi
       next(); // Proceed to route handler
     } catch (accessErr) {
       if (accessErr instanceof Error) {
-        console.error("Access token invalid or expired:", accessErr.message);
+        // console.error("Access token invalid or expired:", accessErr.message);
 
-        // Access token is invalid; check refresh token
         const refreshToken = req.cookies?.refreshToken;
 
         if (!refreshToken) {
@@ -28,23 +34,16 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction): Promi
         }
 
         try {
-          // Verify the refresh token and generate a new access token
           const newAccessToken = await AuthService.refreshAccessToken(refreshToken);
 
-          // Attach the new access token to the request headers for downstream processing
           req.headers.authorization = `Bearer ${newAccessToken}`;
-
-          // Optionally attach decoded user info from the new access token
           const decoded = AuthService.verifyToken(newAccessToken);
           req.user = decoded;
 
-          next(); // Proceed to route handler
+          next();
         } catch (refreshErr) {
-          if (refreshErr instanceof Error) {
-            console.error("Refresh token invalid or expired:", refreshErr.message);
-            res.status(401).json({ message: "Unauthorized: Invalid or expired refresh token" });
-            return;
-          }
+          console.error("Refresh token invalid or expired:", refreshErr instanceof Error ? refreshErr.message : refreshErr);
+          res.status(401).json({ message: "Unauthorized" });
         }
       } else {
         console.error("Unknown error verifying access token:", accessErr);
@@ -52,9 +51,10 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction): Promi
       }
     }
   } catch (err) {
-    console.error("Error verifying JWT:", err);
-    res.status(500).json({ message: err instanceof Error ? err.message : "Internal server error" });
+    console.error("Error verifying JWT:", err instanceof Error ? err.message : err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export default verifyJWT;

@@ -2,10 +2,13 @@ import bcrypt from "bcryptjs";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
 import config from "@/config/config";
+import { redisClient } from "@/middlewares/lib/redisClient";
+// import redisClient from "@/middlewares/lib/redisClient";
 
 class AuthService {
     private static ACCESS_TOKEN_SECRET = config.JWT_SECRET as string; // Access token secret
-    private static REFRESH_TOKEN_SECRET = config.REFRESH_TOKEN_SECRET as string; // 
+    private static REFRESH_TOKEN_SECRET = config.REFRESH_TOKEN_SECRET as string; //
+
     // Method to register a user
     async registerUser(
         username: string,
@@ -77,16 +80,27 @@ class AuthService {
     }
 
     // Method to verify an access token
-    verifyToken(token: string): { id: string; email: string } {
+    verifyToken(token: string): { id: string; email: string; exp: number } {
         try {
             const decoded = jwt.verify(token, AuthService.ACCESS_TOKEN_SECRET) as {
                 id: string;
                 email: string;
+                exp: number; // Include expiration time
             };
             return decoded; // Return decoded payload
         } catch (err) {
             throw new Error("Invalid or expired access token");
         }
+    }
+
+    async blacklistToken(token: string, expiresIn: number): Promise<void> {
+        const blacklistKey = `bl_${token}`;
+        await redisClient.set(blacklistKey, "true", { EX: expiresIn }); // Set expiration time in seconds
+    }
+
+    async isTokenBlacklisted(token: string): Promise<boolean> {
+        const isBlacklisted = await redisClient.get(`bl_${token}`);
+        return Boolean(isBlacklisted);
     }
 
     // Method to verify a refresh token
