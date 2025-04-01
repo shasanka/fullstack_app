@@ -1,0 +1,71 @@
+// {
+//   "extends": "@tsconfig/node22/tsconfig.json" ,
+//   "compilerOptions": {
+//     "rootDir": "src" ,
+//     "outDir": "dist" ,
+//     "esModuleInterop": true ,
+//     "forceConsistentCasingInFileNames": true,
+//     "allowImportingTsExtensions": true,
+//     "strict": true ,
+//     "skipLibCheck":true,
+//     "noEmit": true,
+//     "noEmitOnError": true
+
+//   },
+//   "include": ["./src/**/*"],
+//   "exclude": [
+//     "node_modules",
+//     "**/*.spec.ts",
+//     "**/*.test.ts",
+//     "**/*.stories.tsx",
+//     "**/*.stories.ts"
+//   ]
+// }
+
+{
+  "compilerOptions": {
+    // Target the latest ECMAScript version for Node.js
+    "target": "ESNext",
+    // Use Node.js ESM module system
+    "module": "ESNext",
+    // Strict ESM resolution (Node.js 16+)
+    "moduleResolution": "node",
+    // Root directory for source files
+    "rootDir": "src",
+    // Output directory for compiled files
+    "outDir": "dist",
+    // Enable strict type checking
+    "strict": true,
+    // Allow importing TypeScript files without extensions (for ts-node)
+    "allowImportingTsExtensions": true,
+    // Skip type checking of library declarations
+    "skipLibCheck": true,
+    // Generate source maps for debugging
+    "sourceMap": true,
+    // Ensure compatibility with mixed module systems
+    "esModuleInterop": true,
+    // Base URL for path resolution
+    "baseUrl": "src",
+    "noEmit": true,
+    
+    "noEmitOnError": true,
+    // Optional: Path aliases for cleaner imports
+    "paths": {
+      "@/*": ["*"]
+    },
+    // "typeRoots": [
+    //   "./node_modules/@types",
+    //   "src/types"
+    // ],
+  },
+  // Include only files in the src directory
+  "include": ["src/**/*"],
+  // Exclude node_modules and dist
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    // Enable ESM support
+    "esm": true,
+    // Enable experimental resolver for extensionless imports
+    "experimentalResolver": true
+  }
+}
