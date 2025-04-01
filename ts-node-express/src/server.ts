@@ -1,6 +1,6 @@
 import app from './app';
 import config from './config/config';
-import {initializeMongoDB} from './middlewares/lib/database';
+import { initializeMongoDB } from './middlewares/lib/database';
 import { initializeRedis } from './middlewares/lib/redisClient';
 // Start MongoDB connection
 async function startServer() {
@@ -16,7 +16,7 @@ async function startServer() {
       console.log(`Server running on port ${config.PORT}`);
     });
   } catch (err) {
-    console.error("Failed to start the server:", err);
+    console.error('Failed to start the server:', err);
   }
 }
 
