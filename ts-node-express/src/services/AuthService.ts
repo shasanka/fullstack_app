@@ -66,7 +66,7 @@ class AuthService {
         return jwt.sign(
             { id: userId, email }, // Payload
             AuthService.ACCESS_TOKEN_SECRET, // Secret key
-            { expiresIn: "1m" } // Token expiration (short-lived)
+            { expiresIn: "10m" } // Token expiration (short-lived)
         );
     }
 

@@ -3,7 +3,6 @@ import {
   useContext,
   useState,
   ReactNode,
-  memo,
   useMemo,
   useEffect,
 } from "react";
@@ -42,12 +41,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Checking auth status...");
       try {
         const response = await api.get("/dashboard");
-        console.log("Dashboard response:", response.status, response.data);
+        // console.log("Dashboard response:", response.status, response.data);
         if (response.status === 200) {
           setIsAuthenticated(true);
         }
       } catch (err) {
-        console.error("Auth check failed:", err);
+        // console.error("Auth check failed:", err);
         setIsAuthenticated(false);
       } finally {
         console.log("Setting isLoading to false");
@@ -66,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.status === 200) {
         setIsAuthenticated(true);
         setIsLoading(false); // Ensure loading is false after login
-        navigate("/about");
+        navigate("/");
       }
     } catch (error) {
       console.error("Login failed:", error);

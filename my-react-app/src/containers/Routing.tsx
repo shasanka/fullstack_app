@@ -1,36 +1,40 @@
-import React from "react";
-import { Route, Routes } from "react-router";
+import {  Route, Routes } from "react-router";
 import App from "../App";
 import About from "../pages/About";
 import Login from "../components/Login";
 import Register from "../components/Register";
 import ProtectedRoute from "./ProtectedRoute";
+import Dashboard from "../pages/Dashboard";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import darkTheme from "../lib/theme";
 
 const Routing = () => {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-      {/* Protected Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <App />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/about"
-        element={
-          <ProtectedRoute>
-            <About />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+          {/* Protected Routes */}
+          {/* Protected Routes with App as Layout */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <App />
+              </ProtectedRoute>
+            }
+          >
+            {/* Nested child routes */}
+            <Route path="about" element={<About />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            {/* Optional: Default route when just "/" is accessed */}
+            <Route index element={<div>Welcome to the App!</div>} />
+          </Route>
+        </Routes>
+    </ThemeProvider>
   );
 };
 
