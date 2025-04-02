@@ -6,6 +6,6 @@ import express, { Router } from 'express';
 const dashboardRoute :Router= express.Router();
 
 
-dashboardRoute.get('/', verifyJWT, DashboardController.getDashboard);
+dashboardRoute.get('/',  DashboardController.getDashboard);
 
 export default dashboardRoute

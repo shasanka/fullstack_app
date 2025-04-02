@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  memo,
+  useMemo,
+  useEffect,
+} from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router";
 
@@ -7,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => void;
+  isLoading: boolean;
 }
 
 // Create the context
@@ -23,44 +32,72 @@ export const useAuth = (): AuthContextType => {
 
 // Provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Check for token in cookies or localStorage on initial load
-    return !!document.cookie.includes("accessToken");
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true); // Track initial load
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      console.log("Checking auth status...");
+      try {
+        const response = await api.get("/dashboard");
+        console.log("Dashboard response:", response.status, response.data);
+        if (response.status === 200) {
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        setIsAuthenticated(false);
+      } finally {
+        console.log("Setting isLoading to false");
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   const login = async (credentials: { email: string; password: string }) => {
     try {
-      // Send login request to server
-
-      const response = await api.post("/auth/login", credentials, {
-        withCredentials: true,
-      });
-
+      console.log("Attempting login...");
+      const response = await api.post("/auth/login", credentials);
+      console.log("Login response:", response.status, response.data);
       if (response.status === 200) {
-        setIsAuthenticated(true); // Set authenticated state
-        // Redirect user after successful login
-        navigate("about"); // Replace "/dashboard" with your desired route
+        setIsAuthenticated(true);
+        setIsLoading(false); // Ensure loading is false after login
+        navigate("/about");
       }
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Login failed:", error);
       setIsAuthenticated(false);
+      setIsLoading(false); // Ensure loading is false even on failure
+      throw error;
     }
   };
-  const logout = () => {
-    // Clear session on server
-    api
-      .post("/auth/logout", {}, { withCredentials: true })
-      .then(() => {
-        setIsAuthenticated(false);
-      })
-      .catch((error) => console.error("Logout failed", error));
-  };
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+      setIsAuthenticated(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsAuthenticated(false);
+      navigate("/login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const values = useMemo(
+    () => ({
+      isAuthenticated,
+      login,
+      logout,
+      isLoading,
+    }),
+    [isAuthenticated, isLoading]
   );
+
+  return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
 };
